@@ -60,6 +60,7 @@ public class PostController {
 	@PostMapping(value="registerPost")
 	public String registerPost(@RequestParam("boardId") int boardId,
 			PostVO newPost, RedirectAttributes rttr) {
+		newPost.parseAttachInfo();
 		BoardVO board = new BoardVO(boardId);
 		Party writer = new User("hong");
 		newPost.setWriter(writer);

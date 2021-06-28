@@ -21,10 +21,9 @@
    <div class="card shadow mb-4">
       <div class="card-body">
          <div class="card-header">첨부파일</div>
-         
+				         
          <div class="card-body" id ="uploadDiv">
-            <input id="inFiles" type="file" name="uploadFile" multiple>
-       		<button id="btnUpload">파일올리기</button>
+            <input id="inFiles" type="file"  name="uploadFile" multiple>
          </div>
          
          <div class="card-body" id ="uploadResult">
@@ -41,15 +40,44 @@
 <!-- End of 첨부파일 목록-->
 <script type="text/javascript" src="\resources\js\util\utf8.js"> </script>
 <script type="text/javascript">
+
+function appendUploadUl(attachVOInStr) {
+	var liTags = "";
+	var attachVO = JSON.parse(decodeURL(attachVOInJson));
+	if (attachVO.multimediaType === "others") {
+		liTags += "<li data-attach_info=" + attachVOInJson + "><a href='/uploadFiles/download?fileName=" 
+		+ encodeURIComponent(attachVO.originalFileCallPath) + "'><img src='/resources/img/attachFileIcon.png'>" 
+		+ attachVO.pureFileName + "</a><span>X</span></li>";						
+	} else {
+		 if (attachVO.multimediaType === "audio") {
+			liTags += "<li data-attach_info=" + attachVOInJson + ">" 
+					+ "<a>" 
+					+ "<img src='/resources/img/audioThumbnail.png'>" 
+					+ attachVO.pureFileName + "</a>" 
+					+ "<span>X</span>" 
+					+ "</li>";						
+		} else if (attachVO.multimediaType === "image" || attachVO.multimediaType === "video") {
+			liTags += "<li data-attach_info=" + attachVOInJson + ">" 
+					+ "<a>" 
+					+ "<img src='/uploadFiles/display?fileName=" 
+					+ encodeURIComponent(attachVO.fileCallPath) + "'>" + attachVO.pureFileName + "</a>"
+					+ "<span>X</span>" 
+					+ "</li>";						
+		}
+	}
+	$("#uploadResult ul").append(liTags);
+}
 $(document).ready(function(){
 	//업로드 파일에 대한 확장자 제한하는 정규식
 	var uploadConstraintByExt = new RegExp("(.*?)\.(exe|sh|zip|alz)$");
 	//업로드 파일에 대한 최대 크기 제한
 	var uploadMaxSize = 1036870912; /*1GB*/
 	//화면이 맨 처음 로드시 들어 있는 깨끗한 상태 기억
-	var initClearStatus = $("#uploadDiv").clone();
+	var initClearStatus = $("#uploadDiv").html();
 	
-	$("#btnUpload").on("click", function(e){
+	// 이벤트 위임 형식으로 바꾸기.
+	$("#uploadDiv").on("change", "input", function(){
+		alert("잘된다");
 		var formData = new FormData();
 		var files = $("#inFiles")[0].files;
 		
@@ -66,11 +94,14 @@ $(document).ready(function(){
 			type : 'post',
 			success : function (result){
 				showUploadedFile(result);				
-				$("#uploadDiv").html(initClearStatus.html());
+				//동적인 청소는 영동되어 있는 이빈트 리스너 까지 날아간다.		
+				//이에 이벤트 리스너를 재 등록 해준다. . 이에 위임방식 채용
+				$("#uploadDiv").html(initClearStatus);
 			}
-			
 		});
 	});
+			
+
 	
 	// IE11 까지 고려하여 보여준 이후에 클릭하면 사라지게 한다.
 	$(".bigWrapper").on("click", function () {
@@ -135,54 +166,28 @@ $(document).ready(function(){
 	
 });	
 
+
 function showUploadedFile(result){
 	var liTags = "";
 	$(result).each(function(i, attachVOInJson) {
-		//객체로 바꿀것이다.
-		var attachVO = JSON.parse(decodeURL(attachVOInJson));
-		if(attachVO.multimediaType === "others"){
-			liTags += "<li data-attach_info=" + attachVOInJson + "><a href='/uploadFiles/download?fileName=" 
-			+ encodeURIComponent(attachVO.originalFileCallPath) + "'><img src='/resources/img/attachFileIcon.png'>" 
-			+ attachVO.pureFileName + "</a> <span>X<span/></li>";
-		} else {			
-			if (attachVO.multimediaType === "audio") {
-				liTags += "<li data-attach_info=" + attachVOInJson + ">"
-						+"<a>"
-						+"<img src='/resources/img/audioThumbnail.png'>" 
-						+ attachVO.pureFileName + "</a>"
-						+ "<span>X</span>"
-						+ "</li>"; 		
-			}else if (attachVO.multimediaType === "image" || attachVO.multimediaType === "video" ) {
-				liTags += "<li data-attach_info=" + attachVOInJson + ">"
-						+ "<a>"
-						+ "<img src='/uploadFiles/display?fileName=" 
-						+ encodeURIComponent(attachVO.fileCallPath) + "'>" + attachVO.pureFileName + "</a>"
-						+ "<span>X</span>"
-						+ "</li>"; 		
-				}
-		}
+		appendUploadUl(attachVOInJson);
+		
 	});		
- $("#uploadResult ul").append(liTags);
 }
 /**
  * 첨부 파일 기능은 여러 화면에서 재사용될 가능성이 높다.
  * 이를 각 화면에서 중복 개발하기 보다는 이곳에서 통합적으로 서비스 할 수 있도록 모듈화시키기.
  */
-function addAttachInfo(frmContainer, varName) {
-	var inputAttaches = "";
-	$("#uploadResult ul li").each(function(i, attachLi){
-		var jobObj = $(attachLi);
+ function addAttachInfo(frmContainer, varName){
+		var inputAttaches = "";
+		$("#uploadResult ul li").each(function(i, attachLi){
+			var jobObj = $(attachLi);
+			
+			var attachVO = jobObj.data("attach_info");
+		    
+		    inputAttaches += "<input type='hidden' name='" + varName +  "[" + i + "]' value=" + attachVO + ">";
+		});
 		
-		var attachVO = jobObj.data("attach_info");
-		//json객체로 만들기
-		attachVO = JSON.parse(decodeURL(attachVO));
-		inputAttaches += "<input type='hidden' name='" + varName + "[" + i + "].uuid' value=" + attachVO.uuid + ">";
-		inputAttaches += "<input type='hidden' name='" + varName + "[" + i + "].savedFolderPath' value=" + attachVO.saved_folder_path + ">";
-		inputAttaches += "<input type='hidden' name='" + varName + "[" + i + "].pureFileName' value=" + attachVO.pureFileName + ">";
-		inputAttaches += "<input type='hidden' name='" + varName + "[" + i + "].multimediaType' value=" + attachVO.multimediaType + ">";
-		
-	});
-	
-	frmContainer.append(inputAttaches);
-}
+		frmContainer.append(inputAttaches);
+	}
 </script>

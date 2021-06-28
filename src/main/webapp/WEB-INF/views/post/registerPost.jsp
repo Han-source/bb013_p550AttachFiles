@@ -40,7 +40,7 @@ $(document).ready(function(){
 	var frmPost = $("#frmPost");
 	$("#btnRegisterPost").on("click", function (e){
 		e.preventDefault();
-		addAttachInfo(frmPost, "listAttach");
+		addAttachInfo(frmPost, "listAttachInStringFormat");
 		frmPost.submit();
 	});
 	

@@ -1,8 +1,12 @@
 package www.dream.com.bulletinBoard.model;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.google.gson.Gson;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +19,7 @@ import www.dream.com.party.model.Party;
 
 /**
  * 게시글
+ * 
  * @author "j222_sang"
  */
 @Data
@@ -22,39 +27,53 @@ import www.dream.com.party.model.Party;
 @ClassPrintTarget
 public class PostVO extends ReplyVO {
 	public static final String DESCRIM4POST = "post";
-	
+
 	@HashTarget
 	private String title;
 
-	@PrintTarget(order=300, caption="조회수")
+	@PrintTarget(order = 300, caption = "조회수")
 	private int readCnt;
 	private int likeCnt; // 좋아요
 	private int dislikeCnt; // 싫어요
-	
+
+	private List<String> listAttachInStringFormat;
+
 	private List<AttachFileVO> listAttach;
+
 	public PostVO(String title, String content, Party writer) {
 		super(content, writer);
 		this.title = title;
 	}
-	
-	@PrintTarget(order=100, caption="제목", withAnchor = true)
+
+	@PrintTarget(order = 100, caption = "제목", withAnchor = true)
 	public String getTitleWithCnt() {
 		return title + "[" + super.replyCnt + "]";
 	}
-	
-	public List<String> getAttachList(){
-		if(listAttach == null || listAttach.isEmpty()) 
-			return new ArrayList<>();
-		return listAttach.stream().map(vo -> vo.getJson()).collect(Collectors.toList());
-			
+
+	public List<String> getAttachListInGson() {
+		List<String> ret = new ArrayList<>();
+		ret.addAll(listAttach.stream().map(vo -> vo.getJson()).collect(Collectors.toList()));
+		return ret;
 		
+		 
+
 	}
+
+	public void parseAttachInfo() {
+		if (listAttach == null || listAttach.isEmpty()) {
+			listAttach = new ArrayList<>();
+		}
+
+		for (String ai : listAttachInStringFormat) {
+
+			listAttach.add(AttachFileVO.fromJson(ai));
+		}
+	}
+
 	@Override
 	public String toString() {
-		return "PostVO [" + ToStringSuperHelp.trimSuperString(super.toString()) 
-				+ ", title=" + title + ", readCnt="
-				+ readCnt + ", likeCnt=" + likeCnt 
-				+ ", dislikeCnt=" + dislikeCnt + "]";
+		return "PostVO [" + ToStringSuperHelp.trimSuperString(super.toString()) + ", title=" + title + ", readCnt="
+				+ readCnt + ", likeCnt=" + likeCnt + ", dislikeCnt=" + dislikeCnt + "]";
 	}
 
 }

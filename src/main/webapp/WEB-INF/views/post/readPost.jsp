@@ -41,7 +41,9 @@
 <!--  수정과 목록버튼 눌렀을떄의 이벤트처리 -->
 <script type="text/javascript">
 	$(document).ready(function() {
-		showUploadedFile(${post.attachList});
+		<c:forEach var="attachVOStr" items="${post.attachListInGson}">
+			appendUploadUl(<c:out value="${attachVOStr}" />);	
+		</c:forEach>
 		
 		$("button[data-oper='modify']").on("click", function() {
 			$("#frmOper").submit();
